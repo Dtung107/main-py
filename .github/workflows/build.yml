@@ -1,8 +1,7 @@
 name: Build APK
-
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -10,15 +9,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Build with Buildozer
-        uses: digreatbrian/buildozer-action@v2
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
         with:
-          python-version: '3.11'
-          buildozer-cmd: buildozer -v android debug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+          command: buildozer android debug
+          buildozer_version: stable
+      - uses: actions/upload-artifact@v4
         with:
-          name: so-xo-apk
-          path: bin/*.apk
+          name: soxo-apk
+          path: ${{ steps.buildozer.outputs.filename }}
