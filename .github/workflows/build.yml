@@ -19,6 +19,10 @@ jobs:
         run: |
           mkdir app
           unzip -q project.zip -d app
+      - name: Sua chieu cao giao dien
+        working-directory: app
+        run: |
+          sed -i 's/flex flex-col h-screen w-screen/flex flex-col h-full w-full/' src/App.tsx
       - name: Cai thu vien va build web
         working-directory: app
         run: |
@@ -27,12 +31,53 @@ jobs:
           npx vite build
           mkdir -p dist/pyodide
           cp -r node_modules/pyodide/. dist/pyodide/
-      - name: Tao du an Android va build APK
+      - name: Tao du an Android
         working-directory: app
         run: |
           npx cap add android
           npx cap sync android
-          cd android
+      - name: Sua thanh trang thai va ban phim
+        working-directory: app
+        run: |
+          cat > android/app/src/main/java/com/pydroid/webide/MainActivity.java <<'JAVA'
+          package com.pydroid.webide;
+
+          import android.graphics.Color;
+          import android.os.Bundle;
+          import android.view.View;
+          import android.view.WindowManager;
+          import androidx.core.graphics.Insets;
+          import androidx.core.view.ViewCompat;
+          import androidx.core.view.WindowCompat;
+          import androidx.core.view.WindowInsetsCompat;
+          import androidx.core.view.WindowInsetsControllerCompat;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+            @Override
+            public void onCreate(Bundle savedInstanceState) {
+              super.onCreate(savedInstanceState);
+              getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+              WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+              View content = findViewById(android.R.id.content);
+              content.setBackgroundColor(Color.parseColor("#13131c"));
+              WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), content);
+              controller.setAppearanceLightStatusBars(false);
+              controller.setAppearanceLightNavigationBars(false);
+              ViewCompat.setOnApplyWindowInsetsListener(content, (v, insets) -> {
+                Insets bars = insets.getInsets(
+                    WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+                Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+                v.setPadding(bars.left, bars.top, bars.right, Math.max(bars.bottom, ime.bottom));
+                return WindowInsetsCompat.CONSUMED;
+              });
+              ViewCompat.requestApplyInsets(content);
+            }
+          }
+          JAVA
+      - name: Build APK
+        working-directory: app/android
+        run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4
