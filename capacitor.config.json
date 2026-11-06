@@ -1,3 +1,4 @@
+
 {
   "appId": "com.pydroid3.webide",
   "appName": "Pydroid 3 Web",
@@ -8,7 +9,7 @@
   },
   "android": {
     "allowMixedContent": true,
-    "captureInput": true,
+    "captureInput": false,
     "webContentsDebuggingEnabled": true
   }
 }
